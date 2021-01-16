@@ -5,6 +5,7 @@ import pygame
 
 from settings import Settings
 from game_stats import GameStats
+from button import Button
 from ship import Ship
 from bullet import Bullet
 from alien import Alien
@@ -30,6 +31,9 @@ class AlienInvasion:
 
 		self._create_fleet()
 
+		# Make the play button
+		self.play_button = Button(self, "START")
+
 
 	def run_game(self):
 		"""Start the main loop of the game."""
@@ -49,6 +53,9 @@ class AlienInvasion:
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				sys.exit()
+			elif event.type == pygame.MOUSEBUTTONDOWN:
+				mouse_pos = pygame.mouse.get_pos()
+				self._check_play_button(mouse_pos)
 			elif event.type == pygame.KEYDOWN:
 				self._check_keydown_events(event)
 			elif event.type == pygame.KEYUP:
@@ -75,6 +82,28 @@ class AlienInvasion:
 			self.ship.moving_left = False
 
 
+	def _update_screen(self):
+		# Redraw the screen during each pass through the loop
+		self.screen.fill(self.settings.bg_color)
+		self.ship.blitme()
+		for bullet in self.bullets.sprites():
+			bullet.draw_bullet()
+		self.aliens.draw(self.screen)
+
+		# Draw the play button if the game is inactive
+		if not self.stats.game_active:
+			self.play_button.draw_button()
+
+		# Make the most recently drawn screen visible.
+		pygame.display.flip()
+
+
+	def _check_play_button(self, mouse_pos):
+		"""Start a new game when the player clicks START."""
+		if self.play_button.rect.collidepoint(mouse_pos):
+			self.stats.game_active = True
+
+
 	def _fire_bullet(self):
 		"""Create a new bullet and add it to the bullets group."""
 		if len(self.bullets) < self.settings.bullets_allowed:
@@ -91,18 +120,6 @@ class AlienInvasion:
 				self.bullets.remove(bullet)
 
 		self._check_bullet_alien_collisions()
-
-
-	def _update_screen(self):
-		# Redraw the screen during each pass through the loop
-		self.screen.fill(self.settings.bg_color)
-		self.ship.blitme()
-		for bullet in self.bullets.sprites():
-			bullet.draw_bullet()
-		self.aliens.draw(self.screen)
-
-		# Make the most recently drawn screen visible.
-		pygame.display.flip()
 
 
 	def _create_fleet(self):
