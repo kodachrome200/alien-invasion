@@ -1,6 +1,8 @@
 import pygame.font
 
 class Countdown():
+	"""A class for a countdown number to be rendered on-screen when the
+	game is started or when the ship is hit."""
 
 	def __init__(self, ai_game):
 		"""Create a countdown object to be displayed on screen"""
