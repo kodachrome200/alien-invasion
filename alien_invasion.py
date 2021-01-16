@@ -5,12 +5,15 @@ import pygame
 
 from settings import Settings
 from game_stats import GameStats
+from scoreboard import Scoreboard
 from countdown import Countdown
 from title import Banner
 from button import Button
 from ship import Ship
+from ship_counter import ShipCounter
 from bullet import Bullet
 from alien import Alien
+from game_over import GameOver
 
 class AlienInvasion:
 	"""Overall class to manage game assets and behaviour."""
@@ -24,8 +27,9 @@ class AlienInvasion:
 			self.settings.screen_width, self.settings.screen_height))
 		pygame.display.set_caption("Alien Invasion")
 
-		# Create an instance to store game stats
+		# Create an instance to store game stats and create a scoreboard
 		self.stats = GameStats(self)
+		self.sb = Scoreboard(self)
 
 		self.ship = Ship(self)
 		self.bullets = pygame.sprite.Group()
@@ -39,6 +43,10 @@ class AlienInvasion:
 
 		# Make a countdown object for displaying count on game start / new ship
 		self.countdown = Countdown(self)
+
+		# Make an object for a banner displaying "GAME OVER" when no ships
+		# remain
+		self.gameover = GameOver(self)
 
 
 	def run_game(self):
@@ -96,6 +104,9 @@ class AlienInvasion:
 			bullet.draw_bullet()
 		self.aliens.draw(self.screen)
 
+		# Draw the score information
+		self.sb.show_score()
+
 		# Draw the play button if the game is inactive
 		if not self.stats.game_active:
 			self.title_banner.draw_banner()
@@ -108,6 +119,10 @@ class AlienInvasion:
 	def _reset_game(self):
 		"""Clears game statistics and resets all sprites."""
 		self.stats.reset_stats()
+		self.settings.initialize_dynamic_settings()
+		self.sb.prep_score()
+		self.sb.prep_level()
+		self.sb.prep_ships()
 
 		# Delete remaining ships and bullets
 		self.aliens.empty()
@@ -124,7 +139,6 @@ class AlienInvasion:
 		if button_clicked and not self.stats.game_active:
 			# Reset the game statistics and settings
 			self._reset_game()
-			self.settings.initialize_dynamic_settings()
 			self.stats.game_active = True
 			self._count_down(3)
 
@@ -227,19 +241,30 @@ class AlienInvasion:
 		# Check for bullets that have hit aliens.
 		# If so, get rid of the bullet and the aliens.
 		collisions = pygame.sprite.groupcollide(self.bullets, self.aliens,
-			False, True)
+			True, True)
+
+		if collisions:
+			for aliens in collisions.values():
+				self.stats.score += self.settings.alien_points * len(aliens)
+			self.sb.prep_score()
+			self.sb.check_high_score()
 
 		if not self.aliens:
 			# Destroy existing bullets and create new fleet
 			self.bullets.empty()
 			self._create_fleet()
+
+			# Increase level
 			self.settings.increase_speed()
+			self.stats.level += 1
+			self.sb.prep_level()
 
 
 	def _ship_hit(self):
 		"""Respond to the ship being hit by an alien."""
-		# Decrement ships left
+		# Decrement ships left and update scoreboard
 		self.stats.ships_left -= 1
+		self.sb.prep_ships()
 
 		if self.stats.ships_left > 0:
 			# Get rid of any remaining aliens and bullets
@@ -256,6 +281,7 @@ class AlienInvasion:
 
 		else:
 			self.stats.game_active = False
+			self._game_over()
 			pygame.mouse.set_visible(True)
 
 
@@ -267,6 +293,13 @@ class AlienInvasion:
 				# Treat this the same as if the ship got hit
 				self._ship_hit()
 				break
+
+	def _game_over(self):
+		"""Displays a GAME OVER banner for three seconds when no ships
+		remain."""
+		self.gameover.draw_game_over()
+		pygame.display.flip()
+		sleep(3)
 
 
 if __name__ == '__main__':
