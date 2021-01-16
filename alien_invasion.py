@@ -5,6 +5,7 @@ import pygame
 
 from settings import Settings
 from game_stats import GameStats
+from countdown import Countdown
 from button import Button
 from ship import Ship
 from bullet import Bullet
@@ -33,6 +34,9 @@ class AlienInvasion:
 
 		# Make the play button
 		self.play_button = Button(self, "START")
+
+		# Make a countdown object for displaying count on game start / new ship
+		self.countdown = Countdown(self)
 
 
 	def run_game(self):
@@ -101,7 +105,21 @@ class AlienInvasion:
 	def _check_play_button(self, mouse_pos):
 		"""Start a new game when the player clicks START."""
 		if self.play_button.rect.collidepoint(mouse_pos):
+			# Reset the game statistics
+			self.stats.reset_stats()
 			self.stats.game_active = True
+			self._count_down(3)
+
+
+	def _count_down(self, start):
+		"""Counts down from start and calls current count to be rendered."""
+		count = start
+		while count > 0:
+			self._update_screen()
+			self.countdown.draw_count(count)
+			pygame.display.flip()
+			sleep(1)
+			count -= 1
 
 
 	def _fire_bullet(self):
@@ -212,7 +230,7 @@ class AlienInvasion:
 			self.ship.center_ship()
 
 			# Pause
-			sleep(3)
+			self._count_down(3)
 
 		else:
 			self.stats.game_active = False

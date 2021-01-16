@@ -1,36 +1,35 @@
 import pygame.font
-from time import sleep 
 
-class Countdown:
+class Countdown():
 
-	def __init__(self, ai_game, start):
-		"""Initialize the text for the game start countdown."""
+	def __init__(self, ai_game):
+		"""Create a countdown object to be displayed on screen"""
+		# Initialize data
+
+		# Get screen parameters from ai_game
 		self.screen = ai_game.screen
 		self.screen_rect = self.screen.get_rect()
 
 		# Set the dimensions and properties of the countdown text
-		self.width, self.height = 100, 100
+		self.width, self.height = 250, 250
 		self.text_color = (255, 0, 0)
-		self.font = pygame.font.SysFont("OCR A Extended", 72)
+		self.font = pygame.font.SysFont('OCR A Extended', 150)
 
-
-	def countdown(self, start):
-		"""Counts down from start and calls current count to be rendered."""
-		count = start
-		while count > 0:
-			self._prep_count(count)
-			self._draw_count()
-			sleep(1)
+		# Build the countdown's rect object and center it
+		self.rect = pygame.Rect(0, 0, self.width, self.height)
+		self.rect.center = self.screen_rect.center
 
 
 	def _prep_count(self, count):
 		"""Turn the countdown number into a rendered image and center it"""
-		self.count_image = self.font.render(count, True, self.text_color)
+		count_str = str(count)
+		self.count_image = self.font.render(count_str, True, self.text_color)
 		self.count_image_rect = self.count_image.get_rect()
 		self.count_image_rect.center = self.rect.center
 
 
-	def _draw_count(self):
+	def draw_count(self, count):
 		"""Draw the count number image on the screen."""
+		self._prep_count(count)
 		self.screen.blit(self.count_image, self.count_image_rect)
 
